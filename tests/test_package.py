@@ -1,4 +1,4 @@
-"""Example tests for Qanta."""
+"""Package-level tests for Qanta."""
 
 import qanta
 
