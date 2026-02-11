@@ -13,27 +13,9 @@ A Python library for analysts and quants.
 pip install qanta
 ```
 
-## Development
+## Contributing
 
-```bash
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone and setup
-git clone https://github.com/QminersOrg/qanta.git
-cd qanta
-uv sync --all-extras
-
-# Run tests
-uv run pytest
-
-# Run linting
-uv run ruff check .
-uv run ruff format .
-
-# Run type checking
-uv run mypy src/
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 

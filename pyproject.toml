@@ -110,3 +110,7 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+
+[tool.gitlint.options]
+contrib = "contrib-title-conventional-commits"
+ignore = "body-is-missing"
