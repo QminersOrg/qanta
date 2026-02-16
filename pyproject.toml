@@ -32,10 +32,16 @@ dev = [
     "mypy>=1.8",
     "ruff>=0.3",
 ]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "mike>=2.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/QminersOrg/qanta"
 Repository = "https://github.com/QminersOrg/qanta"
+Documentation = "https://qminersorg.github.io/qanta/"
 
 [tool.hatch.version]
 source = "vcs"

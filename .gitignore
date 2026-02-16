@@ -44,6 +44,9 @@ coverage.xml
 # ruff
 .ruff_cache/
 
+# MkDocs
+site/
+
 # IDE
 .idea/
 .vscode/

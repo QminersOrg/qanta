@@ -33,6 +33,10 @@ uv run mypy src/
 
 # Run all checks (mimics CI)
 uv run ruff check . && uv run ruff format --check . && uv run mypy src/ && uv run pytest
+
+# Documentation
+uv run mkdocs serve       # Start local dev server at http://127.0.0.1:8000
+uv run mkdocs build       # Build static site to site/
 ```
 
 ## Code Style
@@ -95,11 +99,27 @@ git commit -m "feat!: change return type of calculate()"
 4. Open a PR against `master`
 5. Wait for review and CI to pass
 
+## Documentation
+
+Documentation is built with [MkDocs](https://www.mkdocs.org/) using the [Material](https://squidfunk.github.io/mkdocs-material/) theme.
+
+- **Local preview**: `uv run mkdocs serve` — starts a dev server with live reload
+- **Build**: `uv run mkdocs build` — generates static site in `site/`
+
+### Versioned Docs
+
+We use [mike](https://github.com/jimporter/mike) for versioned documentation:
+
+- Pushing to `master` deploys docs under `dev` version
+- Pushing a tag `v*` deploys docs under that version and updates `latest` alias
+
+Docs are hosted at: https://qminersorg.github.io/qanta/
+
 ## Releasing
 
 Releases are handled by maintainers:
 
 1. Merge PRs to `master`
 2. Create and push a version tag: `git tag v1.2.3 && git push origin v1.2.3`
-3. CI automatically publishes to PyPI and creates a GitHub Release
+3. CI automatically publishes to PyPI, creates a GitHub Release, and deploys versioned docs
 
