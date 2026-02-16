@@ -23,7 +23,11 @@ classifiers = [
     "Typing :: Typed",
 ]
 keywords = ["quant", "analytics", "data-analysis", "python"]
-dependencies = []
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "numba>=0.59",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -31,6 +35,7 @@ dev = [
     "pytest-cov>=4.0",
     "mypy>=1.8",
     "ruff>=0.3",
+    "pandas-stubs>=2.0",
 ]
 docs = [
     "mkdocs-material>=9.5",
