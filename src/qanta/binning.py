@@ -162,12 +162,12 @@ def binned_means(
     return result
 
 
-def weighted_percentile(
+def weighted_quantile(
     values: Collection[float],
     weights: Collection[float],
     quantiles: Collection[float],
 ) -> list[float]:
-    """Compute weighted percentiles using staircase interpolation.
+    """Compute weighted quantiles using staircase interpolation.
 
     Each observation is given a flat plateau in the empirical CDF
     proportional to its weight. Quantiles that fall within a single
@@ -192,7 +192,7 @@ def weighted_percentile(
         Heavy weight on the last value pulls the median to 3.0:
 
         ```python
-        >>> weighted_percentile([1, 2, 3], [1, 1, 10], [0.5])
+        >>> weighted_quantile([1, 2, 3], [1, 1, 10], [0.5])
         [3.0]
         ```
 
@@ -200,7 +200,7 @@ def weighted_percentile(
         and 2 and is linearly interpolated:
 
         ```python
-        >>> weighted_percentile([1, 2, 3], [1, 1, 1], [0.25])
+        >>> weighted_quantile([1, 2, 3], [1, 1, 1], [0.25])
         [1.5]
         ```
     """
@@ -278,7 +278,7 @@ def _create_quantile_bins(
     if weights is None:
         bin_edges = np.nanpercentile(values, quantile_points * 100)
     else:
-        bin_edges = np.array(weighted_percentile(values, weights, quantile_points))
+        bin_edges = np.array(weighted_quantile(values, weights, quantile_points))
 
     # Handle duplicate edges (can happen with discrete data)
     bin_edges = np.sort(np.unique(bin_edges))

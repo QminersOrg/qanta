@@ -2,7 +2,7 @@
 
 from importlib.metadata import version
 
-from qanta.binning import binned_means, weighted_percentile
+from qanta.binning import binned_means, weighted_quantile
 
 __version__ = version('qanta')
-__all__ = ['__version__', 'binned_means', 'weighted_percentile']
+__all__ = ['__version__', 'binned_means', 'weighted_quantile']

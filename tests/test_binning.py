@@ -4,52 +4,52 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from qanta import binned_means, weighted_percentile
+from qanta import binned_means, weighted_quantile
 
 
-class TestWeightedPercentile:
-    """Tests for weighted_percentile function."""
+class TestWeightedQuantile:
+    """Tests for weighted_quantile function."""
 
     def test_unweighted_median(self):
         """Equal weights should give standard percentiles."""
         values = [1, 2, 3, 4, 5]
         weights = [1, 1, 1, 1, 1]
-        result = weighted_percentile(values, weights, [0.5])
+        result = weighted_quantile(values, weights, [0.5])
         assert result[0] == pytest.approx(3.0)
 
     def test_weighted_median(self):
         """Weights should shift the percentile."""
         values = [1, 2, 3]
         weights = [1, 1, 10]  # Heavy weight on 3
-        result = weighted_percentile(values, weights, [0.5])
+        result = weighted_quantile(values, weights, [0.5])
         assert result[0] > 2.5  # Median should be pulled toward 3
 
     def test_multiple_quantiles(self):
         """Should return multiple percentiles."""
         values = [1, 2, 3, 4, 5]
         weights = [1, 1, 1, 1, 1]
-        result = weighted_percentile(values, weights, [0.0, 0.5, 1.0])
+        result = weighted_quantile(values, weights, [0.0, 0.5, 1.0])
         assert len(result) == 3
         assert result[0] == pytest.approx(1.0)
         assert result[2] == pytest.approx(5.0)
 
     def test_empty_input(self):
         """Empty input should return NaN."""
-        result = weighted_percentile([], [], [0.5])
+        result = weighted_quantile([], [], [0.5])
         assert np.isnan(result[0])
 
     def test_nan_values_filtered(self):
         """NaN values should be ignored."""
         values = [1, np.nan, 3, np.nan, 5]
         weights = [1, 1, 1, 1, 1]
-        result = weighted_percentile(values, weights, [0.5])
+        result = weighted_quantile(values, weights, [0.5])
         assert result[0] == pytest.approx(3.0)
 
     def test_float_weights_normalized(self):
         """Float weights should be normalized to integers internally."""
         values = [1, 2, 3, 4, 5]
         weights = [0.1, 0.2, 0.3, 0.2, 0.1]  # Non-integer weights
-        result = weighted_percentile(values, weights, [0.5])
+        result = weighted_quantile(values, weights, [0.5])
         # Should work and return a valid result (median pulled toward 3)
         assert result[0] == pytest.approx(3.0)
 
