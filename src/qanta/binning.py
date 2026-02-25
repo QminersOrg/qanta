@@ -1,4 +1,4 @@
-"""N-dimensional centroid computation for binned data."""
+"""N-dimensional binned means for tabular data."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     FloatArray = NDArray[np.floating]
 
 
-def compute_centroids(
+def binned_means(
     df: pd.DataFrame,
     bins: Mapping[str, int | Collection[float]],
     *,
@@ -25,11 +25,11 @@ def compute_centroids(
     output_weights: str | None = None,
     compute_std_errors: bool = False,
 ) -> pd.DataFrame:
-    """Compute n-dimensional centroids for binned data.
+    """Compute n-dimensional binned means.
 
     Splits observations (rows) into n-dimensional hyper-rectangles using the
-    specified binning strategy, then computes the centroid (weighted mean)
-    for each bin.
+    specified binning strategy, then computes the weighted mean for each
+    bin.
 
     Args:
         df: Input DataFrame containing the data.
@@ -43,11 +43,11 @@ def compute_centroids(
         output_weights: If provided, include aggregated weights in the output
             under this column name.
         compute_std_errors: If True, include standard errors of the
-            centroids as additional columns with '_se' suffix.
+            the means as additional columns with '_se' suffix.
 
     Returns:
         DataFrame with one row per bin, containing:
-            - Centroid values for each column specified in `bins`
+            - Mean values for each column specified in `bins`
             - Aggregated weights (if output_weights is provided)
             - Standard errors (if compute_std_errors=True)
 
@@ -55,13 +55,15 @@ def compute_centroids(
         ```python
         import pandas as pd
 
-        df = pd.DataFrame({
-            'x': [0, 1, 7, 8, 9, 10],
-            'y': [0, 1, 7, 1, 3, 9],
-            'w': [1, 3, 1, 1, 2, 1],
-        })
+        df = pd.DataFrame(
+            {
+                'x': [0, 1, 7, 8, 9, 10],
+                'y': [0, 1, 7, 1, 3, 9],
+                'w': [1, 3, 1, 1, 2, 1],
+            }
+        )
 
-        result = compute_centroids(
+        result = binned_means(
             df,
             bins={'x': 2, 'y': 1},
             weights='w',
@@ -103,7 +105,7 @@ def compute_centroids(
         values, weight_values, categories
     )
 
-    # Compute centroids (weighted means) for each bin
+    # Compute weighted means for each bin
     means, standard_errors, agg_weights = _compute_means(
         filtered_values, filtered_weights, bin_codes, compute_std_errors
     )
