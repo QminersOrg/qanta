@@ -31,25 +31,42 @@ def binned_means(
     specified binning strategy, then computes the weighted mean for each
     bin.
 
+    Rows with NaN values in any binned column are excluded. Bins that
+    contain no observations are dropped from the output, so the result
+    may have fewer rows than the total number of bins requested.
+
     Args:
         df: Input DataFrame containing the data.
         bins: Dictionary mapping column names to either:
-            - An integer specifying the number of bins
-            - A sequence of bin edges (for custom binning)
-        quantile: If True, use quantile-based binning (equal-count bins).
-            If False, use equal-width binning.
+            - An integer specifying the number of bins.
+            - A sequence of values whose meaning depends on ``quantile``:
+              - ``quantile=False``: explicit bin edges in data units
+                (e.g. ``[0, 3, 7, 11]``).
+              - ``quantile=True``: quantile break-points between 0 and 1
+                (e.g. ``[0.0, 0.5, 1.0]`` for a median split).
+        quantile: If True (default), use quantile-based binning
+            (equal-count bins). If False, use equal-width binning.
         weights: Column name to use as observation weights. If None, all
-            observations are weighted equally.
-        output_weights: If provided, include aggregated weights in the output
-            under this column name.
+            observations are weighted equally. Weights must be finite
+            and positive.
+        output_weights: If provided, include the **sum** of weights per
+            bin in the output under this column name. Must not collide
+            with any other output column name.
         compute_std_errors: If True, include standard errors of the
-            the means as additional columns with '_se' suffix.
+            means as additional columns with ``'_se'`` suffix. Returns
+            NaN for bins that contain a single observation.
 
     Returns:
-        DataFrame with one row per bin, containing:
-            - Mean values for each column specified in `bins`
-            - Aggregated weights (if output_weights is provided)
-            - Standard errors (if compute_std_errors=True)
+        DataFrame with one row per non-empty bin, containing:
+            - Mean values for each column specified in ``bins``
+            - Sum of weights per bin (if ``output_weights`` is provided)
+            - Standard errors (if ``compute_std_errors=True``)
+
+    Raises:
+        ValueError: If ``weights`` contains NaN, inf, zero, or negative
+            values.
+        ValueError: If ``output_weights`` collides with a bin column or
+            a standard-error column name.
 
     Examples:
         ```python
@@ -69,6 +86,9 @@ def binned_means(
             weights='w',
             output_weights='w',
         )
+        #      x    y    w
+        # 0  2.0  2.0  5.0
+        # 1  9.0  4.0  4.0
         ```
     """
     # Sort columns for deterministic output
@@ -147,15 +167,42 @@ def weighted_percentile(
     weights: Collection[float],
     quantiles: Collection[float],
 ) -> list[float]:
-    """Compute weighted percentiles.
+    """Compute weighted percentiles using staircase interpolation.
+
+    Each observation is given a flat plateau in the empirical CDF
+    proportional to its weight. Quantiles that fall within a single
+    observation's plateau return that observation's exact value;
+    quantiles that fall between plateaus are linearly interpolated.
+
+    Non-finite values (NaN, inf) in ``values`` are silently excluded.
+    If no finite values remain, returns a list of NaN.
 
     Args:
         values: Data values.
-        weights: Weights for each value (must be positive).
+        weights: Weights for each value. Must be positive. Non-integer
+            weights are internally normalized to integers for the
+            staircase construction.
         quantiles: Quantiles to compute (values between 0 and 1).
 
     Returns:
-        List of percentile values corresponding to the requested quantiles.
+        List of percentile values corresponding to the requested
+        quantiles, in the same order.
+
+    Examples:
+        Heavy weight on the last value pulls the median to 3.0:
+
+        ```python
+        >>> weighted_percentile([1, 2, 3], [1, 1, 10], [0.5])
+        [3.0]
+        ```
+
+        With equal weights, q=0.25 falls between the plateaus of 1
+        and 2 and is linearly interpolated:
+
+        ```python
+        >>> weighted_percentile([1, 2, 3], [1, 1, 1], [0.25])
+        [1.5]
+        ```
     """
     values_array = np.asarray(values, dtype=np.float64)
     weight_array = np.asarray(weights, dtype=np.float64)
