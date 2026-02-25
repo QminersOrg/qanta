@@ -75,6 +75,16 @@ def binned_means(
     column_bins = sorted(bins.items())
     columns = [col for col, _ in column_bins]
 
+    # Validate output_weights doesn't collide with other output columns
+    if output_weights is not None:
+        reserved = set(columns)
+        if compute_std_errors:
+            reserved |= {f'{col}_se' for col in columns}
+        if output_weights in reserved:
+            raise ValueError(
+                f"output_weights='{output_weights}' collides with an output column name"
+            )
+
     # Handle empty input
     if df.empty:
         result_columns = (
@@ -89,6 +99,13 @@ def binned_means(
     weight_values = (
         df[weights].to_numpy(dtype=np.float64) if weights is not None else None
     )
+
+    # Validate weights
+    if weight_values is not None:
+        if not np.all(np.isfinite(weight_values)):
+            raise ValueError('Weights must be finite (no NaN or inf values)')
+        if np.any(weight_values <= 0):
+            raise ValueError('Weights must be positive')
 
     # Compute bin assignments for each column
     categories = []
@@ -185,7 +202,7 @@ def _create_equal_width_bins(
     bin_spec: int | Collection[float],
 ) -> tuple[FloatArray, NDArray[np.intp], NDArray[np.bool_]]:
     """Create equal-width bins."""
-    if isinstance(bin_spec, Collection) and not isinstance(bin_spec, int | np.integer):
+    if isinstance(bin_spec, Collection):
         bin_edges = np.asarray(bin_spec, dtype=np.float64)
         if len(bin_edges) < 2:
             bin_edges = np.array([-np.inf, np.inf])
@@ -204,7 +221,7 @@ def _create_quantile_bins(
     weights: FloatArray | None,
 ) -> tuple[FloatArray, NDArray[np.intp], NDArray[np.bool_]]:
     """Create quantile-based bins (equal count per bin)."""
-    if isinstance(bin_spec, Collection) and not isinstance(bin_spec, int | np.integer):
+    if isinstance(bin_spec, Collection):
         quantile_points = np.asarray(bin_spec, dtype=np.float64)
     else:
         n_bins = int(bin_spec)
@@ -389,6 +406,13 @@ def _compute_std_errors_numba(  # pragma: no cover
         total_weight = agg_weights[i]
         # Denominator for weighted variance (reliability weights)
         variance_denom = total_weight - sum_squared_weights[i] / total_weight
+
+        if variance_denom <= 0.0:
+            # Single observation or degenerate bin — SE is undefined
+            for col in range(n_columns):
+                standard_errors[i, col] = np.nan
+            continue
+
         # Factor to convert std dev to standard error of mean
         se_factor = np.sqrt(sum_squared_weights[i] / (total_weight * total_weight))
 

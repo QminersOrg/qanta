@@ -222,3 +222,47 @@ class TestBinnedMeans:
 
         # With 2 bins for x and 1 bin for y, expect 2 bin means
         assert len(result) == 2
+
+    def test_std_errors_single_observation_bin(self):
+        """SE should be NaN for bins with a single observation."""
+        df = pd.DataFrame({'x': [1, 10]})
+        result = binned_means(
+            df, bins={'x': 2}, quantile=False, compute_std_errors=True
+        )
+
+        assert len(result) == 2
+        assert 'x_se' in result.columns
+        # Each bin has one observation — SE is undefined
+        assert result['x_se'].isna().all()
+
+    def test_output_weights_collides_with_bin_column(self):
+        """output_weights matching a bin column should raise ValueError."""
+        df = pd.DataFrame({'x': [1, 2, 3]})
+        with pytest.raises(ValueError, match='collides'):
+            binned_means(df, bins={'x': 1}, output_weights='x')
+
+    def test_output_weights_collides_with_se_column(self):
+        """output_weights matching an SE column should raise ValueError."""
+        df = pd.DataFrame({'x': [1, 2, 3]})
+        with pytest.raises(ValueError, match='collides'):
+            binned_means(
+                df, bins={'x': 1}, output_weights='x_se', compute_std_errors=True
+            )
+
+    def test_nan_values_in_data(self):
+        """NaN values should be filtered out (assigned to no bin)."""
+        df = pd.DataFrame({'x': [1.0, 2.0, np.nan, 4.0, 5.0]})
+        result = binned_means(df, bins={'x': 2}, quantile=False)
+
+        # NaN observation should be excluded; remaining 4 values split into 2 bins
+        assert len(result) == 2
+        assert result['x'].notna().all()
+
+    def test_more_bins_than_observations(self):
+        """More bins than observations should not crash."""
+        df = pd.DataFrame({'x': [1.0, 2.0, 3.0]})
+        result = binned_means(df, bins={'x': 10}, quantile=False)
+
+        # Not all bins will be populated; should still return valid results
+        assert len(result) > 0
+        assert result['x'].notna().all()
