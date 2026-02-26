@@ -249,6 +249,30 @@ class TestBinnedMeans:
                 df, bins={'x': 1}, output_weights='x_se', compute_std_errors=True
             )
 
+    def test_nan_weights_raise(self):
+        """NaN in weights should raise ValueError."""
+        df = pd.DataFrame({'x': [1, 2, 3], 'w': [1.0, np.nan, 1.0]})
+        with pytest.raises(ValueError, match='finite'):
+            binned_means(df, bins={'x': 1}, weights='w')
+
+    def test_inf_weights_raise(self):
+        """Inf in weights should raise ValueError."""
+        df = pd.DataFrame({'x': [1, 2, 3], 'w': [1.0, np.inf, 1.0]})
+        with pytest.raises(ValueError, match='finite'):
+            binned_means(df, bins={'x': 1}, weights='w')
+
+    def test_zero_weights_raise(self):
+        """Zero weights should raise ValueError."""
+        df = pd.DataFrame({'x': [1, 2, 3], 'w': [1.0, 0.0, 1.0]})
+        with pytest.raises(ValueError, match='positive'):
+            binned_means(df, bins={'x': 1}, weights='w')
+
+    def test_negative_weights_raise(self):
+        """Negative weights should raise ValueError."""
+        df = pd.DataFrame({'x': [1, 2, 3], 'w': [1.0, -1.0, 1.0]})
+        with pytest.raises(ValueError, match='positive'):
+            binned_means(df, bins={'x': 1}, weights='w')
+
     def test_nan_values_in_data(self):
         """NaN values should be filtered out (assigned to no bin)."""
         df = pd.DataFrame({'x': [1.0, 2.0, np.nan, 4.0, 5.0]})
